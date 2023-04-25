@@ -379,8 +379,19 @@ export const useChatStore = create<ChatStore>()(
       },
 
       async onUserInput(content) {
+        const userMessage: Message = createMessage({
+          role: "user",
+          content,
+        });
+
+        // update user message
+        get().updateCurrentSession((session) => {
+          session.messages.push(userMessage);
+        });
+
         // Shopper
         if (content.startsWith("page:")) {
+          userMessage.content = userMessage.content + "\n\n正在解析页面...";
           const url = content.replace("page:", "");
           const response = await fetch("http://localhost:5000/page", {
             method: "post",
@@ -389,12 +400,8 @@ export const useChatStore = create<ChatStore>()(
           });
           const data = await response.json();
           const prompt = data["result"];
-          content = prompt;
+          userMessage.content = prompt;
         }
-        const userMessage: Message = createMessage({
-          role: "user",
-          content,
-        });
 
         const botMessage: Message = createMessage({
           role: "assistant",
@@ -410,7 +417,7 @@ export const useChatStore = create<ChatStore>()(
 
         // save user's and bot's message
         get().updateCurrentSession((session) => {
-          session.messages.push(userMessage);
+          // session.messages.push(userMessage);
           session.messages.push(botMessage);
         });
 
